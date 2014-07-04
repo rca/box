@@ -1,6 +1,7 @@
 BASE_URL = 'https://api.box.com/2.0'
 
-FOLDERS_URL = '{}/folders/{{}}/items'.format(BASE_URL)
+FOLDERS_URL = '{}/folders'.format(BASE_URL)
+FOLDER_LIST_URL = '{}/{{}}/items'.format(FOLDERS_URL)
 
 MAX_FOLDERS = 1000
 
@@ -20,7 +21,7 @@ class Client(object):
         else:
             folder_id = 0
 
-        url = FOLDERS_URL.format(folder_id)
+        url = FOLDER_LIST_URL.format(folder_id)
 
         count = 0
         while count < limit:
