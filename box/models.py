@@ -24,10 +24,9 @@ class Client(object):
 
         count = 0
         while count < limit:
+            _limit = min(MAX_FOLDERS, limit-count)
             params = {
-                # this is the request limit, not the number of folders we actually want
-                'limit': 100,
-
+                'limit': _limit,
                 'offset': offset+count,
             }
 
@@ -42,8 +41,7 @@ class Client(object):
                 break
 
             # determine how many more entries to get from the result set
-            entry_count = limit - count
-            entries = json_data['entries'][:entry_count]
+            entries = json_data['entries']
             for entry in entries:
                 yield entry
 
