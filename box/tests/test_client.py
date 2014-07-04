@@ -1,14 +1,24 @@
 import functools
+import json
 import mock
 import unittest
 
 from box import Client
+from box.models import FOLDERS_URL
 
 
 class ClientTestCase(unittest.TestCase):
     def setUp(self):
         self.provider_logic = mock.Mock()
         self.client = Client(self.provider_logic)
+
+    def test_create_folder(self):
+        name = 'foo'
+        parent = {'id': 0, 'name': 'root'}
+        self.client.create_folder(name, parent=parent)
+
+        payload = json.dumps({'name': name, 'parent': {'id': parent['id']}})
+        self.provider_logic.post.assert_called_with(FOLDERS_URL, data=payload)
 
     def test_folders(self):
         """

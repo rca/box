@@ -1,3 +1,5 @@
+import json
+
 BASE_URL = 'https://api.box.com/2.0'
 
 FOLDERS_URL = '{}/folders'.format(BASE_URL)
@@ -14,6 +16,16 @@ class Client(object):
         :return:
         """
         self.provider_logic = provider_logic
+
+    def create_folder(self, name, parent):
+        payload = json.dumps({
+            'name': name,
+            'parent': {
+                'id': parent['id'],
+            }
+        })
+
+        self.provider_logic.post(FOLDERS_URL, data=payload)
 
     def folders(self, parent=None, limit=100, offset=0):
         if parent:
