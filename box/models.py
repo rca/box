@@ -1,5 +1,3 @@
-from oauthclient.applogic import ProviderLogic
-
 BASE_URL = 'https://api.box.com/2.0'
 
 FOLDERS_URL = '{}/folders/{{}}/items'.format(BASE_URL)
@@ -8,8 +6,13 @@ MAX_FOLDERS = 1000
 
 
 class Client(object):
-    def __init__(self, provider):
-        self.provider = provider
+    def __init__(self, provider_logic):
+        """
+        Box client constructor
+        :param provider_logic: oauthclient ProviderLogic instance
+        :return:
+        """
+        self.provider_logic = provider_logic
 
     def folders(self, parent=None, limit=100, offset=0):
         if parent:
@@ -18,8 +21,6 @@ class Client(object):
             folder_id = 0
 
         url = FOLDERS_URL.format(folder_id)
-
-        provider_logic = ProviderLogic(self.provider)
 
         count = 0
         while count < limit:
@@ -30,7 +31,7 @@ class Client(object):
                 'offset': offset+count,
             }
 
-            response = provider_logic.get(url, params=params)
+            response = self.provider_logic.get(url, params=params)
 
             json_data = response.json()
 
