@@ -18,6 +18,13 @@ class Client(object):
         self.provider_logic = provider_logic
 
     def create_folder(self, name, parent):
+        """
+        Creates a folder within the given parent
+
+        :param name: The name of the folder to create
+        :param parent: Box API folder item dictionary
+        :return: The Box API response JSON data
+        """
         payload = json.dumps({
             'name': name,
             'parent': {
