@@ -1,5 +1,7 @@
 import json
 
+from requests.exceptions import HTTPError
+
 BASE_URL = 'https://api.box.com/2.0'
 
 FOLDERS_URL = '{}/folders'.format(BASE_URL)
@@ -7,6 +9,8 @@ FOLDER_LIST_URL = '{}/{{}}/items'.format(FOLDERS_URL)
 
 UPLOAD_BASE_URL = 'https://upload.box.com/api/2.0'
 UPLOAD_FILE_URL = '{}/files/content'.format(UPLOAD_BASE_URL)
+
+UPDATE_FILE_URL = '{}/files/{{}}/content'.format(UPLOAD_BASE_URL)
 
 MAX_FOLDERS = 1000
 
@@ -84,7 +88,7 @@ class Client(object):
         """
         Upload a file to the given parent
 
-        This will throw a 409 HTTP error when the file already exits
+        This handles 409 HTTP errors and will attempt to update the existing file.
 
         :param parent: box item dictionary representing the parent folder to upload to
         :param fileobj: a file-like object to get the contents from
@@ -98,6 +102,24 @@ class Client(object):
             'filename': (fileobj.name, fileobj),
         }
 
-        response = self.provider_logic.post(UPLOAD_FILE_URL, data=data, files=files)
+        try:
+            response = self.provider_logic.post(UPLOAD_FILE_URL, data=data, files=files)
+        except HTTPError, exc:
+            if exc.response.status_code != 409:
+                raise
+
+            error_json = exc.response.json()
+            existing_file_id = error_json['context_info']['conflicts']['id']
+            existing_file_etag = error_json['context_info']['conflicts']['etag']
+
+            # update the file instead of upload it
+            fileobj.seek(0, 0)  # rewind the file just in case.
+
+            headers = {
+                'If-Match': existing_file_etag,
+            }
+
+            url = UPDATE_FILE_URL.format(existing_file_id)
+            response = self.provider_logic.post(url, files=files, headers=headers)
 
         return response.json()

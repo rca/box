@@ -3,8 +3,10 @@ import json
 import mock
 import unittest
 
+from requests.exceptions import HTTPError
+
 from box import Client
-from box.models import FOLDERS_URL, UPLOAD_FILE_URL
+from box.models import FOLDERS_URL, UPDATE_FILE_URL, UPLOAD_FILE_URL
 
 
 class ClientTestCase(unittest.TestCase):
@@ -123,6 +125,33 @@ class ClientTestCase(unittest.TestCase):
         self.provider_logic.post.assert_called_with(
             UPLOAD_FILE_URL,
             data={'parent_id': parent['id']},
+            files={'filename': (fileobj.name, fileobj)}
+        )
+
+        self.assertEqual(expected, response_json)
+
+    def test_upload_existing_file(self):
+        fileobj = mock.Mock()
+        fileobj.name = 'foo.txt'
+
+        parent = {'id': 0}
+
+        error_response_mock = mock.Mock(status_code=409)
+        error_json = {'context_info': {'conflicts': {'id': 1234, 'etag': 'etag'}}}
+        error_response_mock.json.return_value = error_json
+        error = HTTPError(response=error_response_mock)
+
+        expected = {'status': 'ok'}
+        response = mock.Mock()
+        response.json.return_value = expected
+
+        self.provider_logic.post.side_effect = [error, response]
+
+        response_json = self.client.upload(parent, fileobj)
+
+        self.provider_logic.post.assert_called_with(
+            UPDATE_FILE_URL.format(error_json['context_info']['conflicts']['id']),
+            headers={'If-Match': error_json['context_info']['conflicts']['etag']},
             files={'filename': (fileobj.name, fileobj)}
         )
 
