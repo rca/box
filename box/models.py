@@ -27,7 +27,7 @@ class Client(object):
 
         self.provider_logic.post(FOLDERS_URL, data=payload)
 
-    def folders(self, parent=None, limit=100, offset=0):
+    def folder_items(self, parent=None, limit=100, offset=0):
         if parent:
             folder_id = parent['id']
         else:

@@ -29,7 +29,7 @@ class ClientTestCase(unittest.TestCase):
 
         self.provider_logic.get.return_value = response
 
-        folders = list(self.client.folders())
+        folders = list(self.client.folder_items())
 
         self.assertEqual(['folder'], folders)
 
@@ -47,7 +47,7 @@ class ClientTestCase(unittest.TestCase):
 
         self.provider_logic.get.return_value = response
 
-        folders = list(self.client.folders(limit=10))
+        folders = list(self.client.folder_items(limit=10))
 
         self.assertEqual(['folder']*10, folders)
 
@@ -66,9 +66,9 @@ class ClientTestCase(unittest.TestCase):
 
         self.provider_logic.get.return_value = response
 
-        # wrap in list() call in order for the debugger step into folders(),
+        # wrap in list() call in order for the debugger step into folder_items(),
         # i.e., the generator has to be evaluated.
-        list(self.client.folders(limit=10))
+        list(self.client.folder_items(limit=10))
 
         self.assertEqual(1, self.provider_logic.get.call_count)
 
@@ -81,7 +81,7 @@ class ClientTestCase(unittest.TestCase):
 
         self.provider_logic.get.return_value = response
 
-        folders = list(self.client.folders(limit=200))
+        folders = list(self.client.folder_items(limit=200))
 
         self.assertEqual(['folder']*200, folders)
 
@@ -94,7 +94,7 @@ class ClientTestCase(unittest.TestCase):
 
         self.provider_logic.get.return_value = response
 
-        folders = list(self.client.folders(parent={'id': 123}))
+        folders = list(self.client.folder_items(parent={'id': 123}))
 
         self.assertEqual(['folder']*100, folders)
 
