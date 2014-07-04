@@ -5,6 +5,9 @@ BASE_URL = 'https://api.box.com/2.0'
 FOLDERS_URL = '{}/folders'.format(BASE_URL)
 FOLDER_LIST_URL = '{}/{{}}/items'.format(FOLDERS_URL)
 
+UPLOAD_BASE_URL = 'https://upload.box.com/api/2.0'
+UPLOAD_FILE_URL = '{}/files/content'.format(UPLOAD_BASE_URL)
+
 MAX_FOLDERS = 1000
 
 
@@ -76,3 +79,25 @@ class Client(object):
             total_count = json_data['total_count']
             if count >= total_count:
                 break
+
+    def upload(self, parent, fileobj):
+        """
+        Upload a file to the given parent
+
+        This will throw a 409 HTTP error when the file already exits
+
+        :param parent: box item dictionary representing the parent folder to upload to
+        :param fileobj: a file-like object to get the contents from
+        :return: Box API response JSON data
+        """
+        data = {
+            'parent_id': parent['id'],
+        }
+
+        files = {
+            'filename': (fileobj.name, fileobj),
+        }
+
+        response = self.provider_logic.post(UPLOAD_FILE_URL, data=data, files=files)
+
+        return response.json()

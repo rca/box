@@ -4,7 +4,7 @@ import mock
 import unittest
 
 from box import Client
-from box.models import FOLDERS_URL
+from box.models import FOLDERS_URL, UPLOAD_FILE_URL
 
 
 class ClientTestCase(unittest.TestCase):
@@ -108,3 +108,22 @@ class ClientTestCase(unittest.TestCase):
             'https://api.box.com/2.0/folders/123/items',
             params={'limit': 100, 'offset': 0}
         )
+
+    def test_upload(self):
+        fileobj = mock.Mock()
+        fileobj.name = 'foo.txt'
+
+        parent = {'id': 0}
+
+        expected = {'status': 'ok'}
+        self.provider_logic.post.return_value.json.return_value = expected
+
+        response_json = self.client.upload(parent, fileobj)
+
+        self.provider_logic.post.assert_called_with(
+            UPLOAD_FILE_URL,
+            data={'parent_id': parent['id']},
+            files={'filename': (fileobj.name, fileobj)}
+        )
+
+        self.assertEqual(expected, response_json)
