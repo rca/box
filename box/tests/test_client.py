@@ -15,10 +15,16 @@ class ClientTestCase(unittest.TestCase):
     def test_create_folder(self):
         name = 'foo'
         parent = {'id': 0, 'name': 'root'}
-        self.client.create_folder(name, parent=parent)
+
+        expected = {'status': 'ok'}
+        self.provider_logic.post().json.return_value = expected
+
+        json_data = self.client.create_folder(name, parent=parent)
 
         payload = json.dumps({'name': name, 'parent': {'id': parent['id']}})
         self.provider_logic.post.assert_called_with(FOLDERS_URL, data=payload)
+
+        self.assertEqual(expected, json_data)
 
     def test_folders(self):
         """

@@ -25,7 +25,9 @@ class Client(object):
             }
         })
 
-        self.provider_logic.post(FOLDERS_URL, data=payload)
+        response = self.provider_logic.post(FOLDERS_URL, data=payload)
+
+        return response.json()
 
     def folder_items(self, parent=None, limit=100, offset=0):
         if parent:
