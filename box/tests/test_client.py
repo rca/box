@@ -6,7 +6,7 @@ import unittest
 from requests.exceptions import HTTPError
 
 from box import Client
-from box.models import FOLDERS_URL, UPDATE_FILE_URL, UPLOAD_FILE_URL
+from box.models import FILE_URL, FOLDERS_URL, UPDATE_FILE_URL, UPLOAD_FILE_URL
 
 
 class ClientTestCase(unittest.TestCase):
@@ -27,6 +27,13 @@ class ClientTestCase(unittest.TestCase):
         self.provider_logic.post.assert_called_with(FOLDERS_URL, data=payload)
 
         self.assertEqual(expected, json_data)
+
+    def test_delete(self):
+        file_id = 123
+        self.client.delete({'id': file_id, 'etag': 1})
+
+        url = FILE_URL.format(file_id)
+        self.provider_logic.delete.assert_called_with(url, headers={'If-Match': 1})
 
     def test_folders(self):
         """

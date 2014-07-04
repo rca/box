@@ -4,6 +4,8 @@ from requests.exceptions import HTTPError
 
 BASE_URL = 'https://api.box.com/2.0'
 
+FILE_URL = '{}/files/{{}}'.format(BASE_URL)
+
 FOLDERS_URL = '{}/folders'.format(BASE_URL)
 FOLDER_LIST_URL = '{}/{{}}/items'.format(FOLDERS_URL)
 
@@ -42,6 +44,20 @@ class Client(object):
         response = self.provider_logic.post(FOLDERS_URL, data=payload)
 
         return response.json()
+
+    def delete(self, item):
+        """
+        Deletes a file
+
+        :param item: Box API dictionary representing the item to delete
+        :return: None
+        """
+        url = FILE_URL.format(item['id'])
+        headers = {
+            'If-Match': item['etag']
+        }
+
+        self.provider_logic.delete(url, headers=headers)
 
     def folder_items(self, parent=None, limit=100, offset=0):
         """
