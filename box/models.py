@@ -37,6 +37,13 @@ class Client(object):
         return response.json()
 
     def folder_items(self, parent=None, limit=100, offset=0):
+        """
+        Generator for items in given parent
+        :param parent: optionarl Box API folder item dictionary
+        :param limit: How many items to retrieve
+        :param offset: Item offset
+        :return: Generator of Box API item dictionaries
+        """
         if parent:
             folder_id = parent['id']
         else:
