@@ -32,6 +32,7 @@ class Client(object):
             }
 
             response = self.provider_logic.get(url, params=params)
+            response.raise_for_status()
 
             json_data = response.json()
 
