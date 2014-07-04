@@ -35,11 +35,6 @@ class Client(object):
 
             json_data = response.json()
 
-            # if we hit the total number of entries, we have to be done
-            total_count = json_data['total_count']
-            if count >= total_count:
-                break
-
             # determine how many more entries to get from the result set
             entries = json_data['entries']
             for entry in entries:
@@ -47,3 +42,8 @@ class Client(object):
 
             # increment the count by the number of entries
             count += len(entries)
+
+            # if we hit the total number of entries, we have to be done
+            total_count = json_data['total_count']
+            if count >= total_count:
+                break

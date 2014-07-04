@@ -41,6 +41,27 @@ class ClientTestCase(unittest.TestCase):
 
         self.assertEqual(['folder']*10, folders)
 
+    def test_total_count(self):
+        """
+        Make sure additional requests aren't made when total_count is hit
+        """
+        response = mock.Mock()
+
+        def get_json(get_mock, total_count=1):
+            _args, _kwargs = get_mock.call_args
+            num_folders = min(_kwargs['params']['limit'], total_count)
+            return {'total_count': total_count, 'entries': ['folder'] * num_folders}
+
+        response.json.side_effect = functools.partial(get_json, self.provider_logic.get)
+
+        self.provider_logic.get.return_value = response
+
+        # wrap in list() call in order for the debugger step into folders(),
+        # i.e., the generator has to be evaluated.
+        list(self.client.folders(limit=10))
+
+        self.assertEqual(1, self.provider_logic.get.call_count)
+
     def test_folders_outer_limit(self):
         """
         Ensures multiple requests are made to honor the outer limit
