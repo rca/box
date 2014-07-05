@@ -17,6 +17,8 @@ UPDATE_FILE_URL = '{}/files/{{}}/content'.format(UPLOAD_BASE_URL)
 
 MAX_FOLDERS = 1000
 
+ROOT_FOLDER = {'id': 0}
+
 
 class Client(object):
     def __init__(self, provider_logic):
@@ -85,12 +87,10 @@ class Client(object):
         :param offset: Item offset
         :return: Generator of Box API item dictionaries
         """
-        if parent:
-            folder_id = parent['id']
-        else:
-            folder_id = 0
+        if parent is None:
+            parent = ROOT_FOLDER
 
-        url = FOLDER_LIST_URL.format(folder_id)
+        url = FOLDER_LIST_URL.format(parent['id'])
 
         count = 0
         while count < limit:
