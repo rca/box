@@ -134,6 +134,26 @@ class Client(object):
             if count >= total_count:
                 break
 
+    def set_tags(self, item, tags):
+        """
+        Sets the tags for the given item
+
+        :param item: Box API item dictionary
+        :param tags: List of tags
+        :return:
+        """
+        url = FILE_URL.format(item['id'])
+
+        params = {
+            'fields': 'tags',
+        }
+
+        data = json.dumps({
+            'tags': tags,
+        })
+
+        self.provider_logic.put(url, data=data)
+
     def upload(self, parent, fileobj):
         """
         Upload a file to the given parent

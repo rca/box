@@ -158,6 +158,18 @@ class ClientTestCase(unittest.TestCase):
             params={'limit': 100, 'offset': 0}
         )
 
+    def test_set_tags(self):
+        item = {'id': 123}
+        tags = ['foo']
+
+        url = FILE_URL.format(item['id'])
+        params = {'fields': 'tags'}
+        data = json.dumps({'tags': tags})
+
+        self.client.set_tags(item, tags)
+
+        self.provider_logic.put.assert_called_with(url, data=data)
+
     def test_upload(self):
         fileobj = mock.Mock()
         fileobj.name = 'foo.txt'
