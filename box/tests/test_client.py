@@ -6,7 +6,7 @@ import unittest
 from requests.exceptions import HTTPError
 
 from box import Client
-from box.models import FILE_URL, FOLDERS_URL, UPDATE_FILE_URL, UPLOAD_FILE_URL
+from box.models import FILE_URL, FOLDER_URL, FOLDERS_URL, UPDATE_FILE_URL, UPLOAD_FILE_URL
 
 
 class ClientTestCase(unittest.TestCase):
@@ -34,6 +34,20 @@ class ClientTestCase(unittest.TestCase):
 
         url = FILE_URL.format(file_id)
         self.provider_logic.delete.assert_called_with(url, headers={'If-Match': 1})
+
+    def test_delete_folder(self):
+        folder_id = 123
+        self.client.delete_folder({'id': folder_id})
+
+        url = FOLDER_URL.format(folder_id)
+        self.provider_logic.delete.assert_called_with(url, params={'recursive': False})
+
+    def test_delete_folder_recursive(self):
+        folder_id = 123
+        self.client.delete_folder({'id': folder_id}, recursive=True)
+
+        url = FOLDER_URL.format(folder_id)
+        self.provider_logic.delete.assert_called_with(url, params={'recursive': True})
 
     def test_folders(self):
         """

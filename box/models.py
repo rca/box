@@ -7,7 +7,8 @@ BASE_URL = 'https://api.box.com/2.0'
 FILE_URL = '{}/files/{{}}'.format(BASE_URL)
 
 FOLDERS_URL = '{}/folders'.format(BASE_URL)
-FOLDER_LIST_URL = '{}/{{}}/items'.format(FOLDERS_URL)
+FOLDER_URL = '{}/{{}}'.format(FOLDERS_URL)
+FOLDER_LIST_URL = '{}/items'.format(FOLDER_URL)
 
 UPLOAD_BASE_URL = 'https://upload.box.com/api/2.0'
 UPLOAD_FILE_URL = '{}/files/content'.format(UPLOAD_BASE_URL)
@@ -58,6 +59,23 @@ class Client(object):
         }
 
         self.provider_logic.delete(url, headers=headers)
+
+    def delete_folder(self, item, recursive=False):
+        """
+        Deletes a folder
+
+        :param item: Box API dictionary representing the folder to delete
+        :param recursive: Whether to delete a folder that contains items.  Default=False
+        :return: None
+        """
+        folder_id = item['id']
+        url = FOLDER_URL.format(folder_id)
+
+        params = {
+            'recursive': recursive,
+        }
+
+        self.provider_logic.delete(url, params=params)
 
     def folder_items(self, parent=None, limit=100, offset=0):
         """
