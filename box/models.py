@@ -79,6 +79,22 @@ class Client(object):
 
         self.provider_logic.delete(url, params=params)
 
+    def file_info(self, item, fields=None):
+        """
+        Returns file information for the given item
+
+        :param item: Box API item dictionary
+        :return:
+        """
+        url = FILE_URL.format(item['id'])
+
+        params = {}
+
+        if fields:
+            params['fields'] = fields
+
+        return self.provider_logic.get(url, params=params).json()
+
     def folder_items(self, parent=None, limit=100, offset=0):
         """
         Generator for items in given parent

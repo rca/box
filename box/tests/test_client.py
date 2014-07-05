@@ -49,6 +49,32 @@ class ClientTestCase(unittest.TestCase):
         url = FOLDER_URL.format(folder_id)
         self.provider_logic.delete.assert_called_with(url, params={'recursive': True})
 
+    def test_file_info(self):
+        item = {'id': 1234}
+        url = FILE_URL.format(item['id'])
+
+        expected = {}
+        self.provider_logic.get.return_value.json.return_value = expected
+
+        info = self.client.file_info(item)
+
+        self.provider_logic.get.assert_called_with(url, params={})
+
+        self.assertEqual(expected, info)
+
+    def test_file_info_with_fields(self):
+        item = {'id': 1234}
+        url = FILE_URL.format(item['id'])
+
+        expected = {}
+        self.provider_logic.get.return_value.json.return_value = expected
+
+        info = self.client.file_info(item, fields='tags')
+
+        self.provider_logic.get.assert_called_with(url, params={'fields': 'tags'})
+
+        self.assertEqual(expected, info)
+
     def test_folders(self):
         """
         Ensures only one item is returned even though the limit is 100 by default
