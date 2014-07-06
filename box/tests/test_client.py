@@ -251,6 +251,42 @@ class ClientTestCase(unittest.TestCase):
 
         self.oauth2_client.put.assert_called_with(url, data=data)
 
+    def test_update(self):
+        item = {'id': 1234}
+
+        fileobj = mock.Mock()
+        fileobj.name = 'foo.txt'
+
+        self.client.update(item, fileobj, etag='etag')
+
+        url = UPDATE_FILE_URL.format(item['id'])
+
+        self.oauth2_client.post.assert_called_with(
+            url,
+            files={'filename': (fileobj.name, fileobj)},
+            headers={'If-Match': 'etag'}
+        )
+
+    def test_update_etag_none(self):
+        item = {'id': 1234}
+
+        fileobj = mock.Mock()
+        fileobj.name = 'foo.txt'
+
+        self.client.file_info = mock.Mock()
+        self.client.file_info.return_value = {'etag': 'et'}
+
+        self.client.update(item, fileobj)
+
+        self.client.file_info.assert_called_with(item, fields='etag')
+
+        url = UPDATE_FILE_URL.format(item['id'])
+        self.oauth2_client.post.assert_called_with(
+            url,
+            files={'filename': (fileobj.name, fileobj)},
+            headers={'If-Match': 'et'}
+        )
+
     def test_upload(self):
         fileobj = mock.Mock()
         fileobj.name = 'foo.txt'

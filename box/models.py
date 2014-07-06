@@ -205,6 +205,22 @@ class Client(object):
 
         self.oauth2_client.put(url, data=data)
 
+    def update(self, item, fileobj, etag=None):
+        headers = {
+            'If-Match': etag or self.get_etag(item),
+        }
+
+        files = {
+            'filename': (fileobj.name, fileobj),
+        }
+
+        url = UPDATE_FILE_URL.format(item['id'])
+
+        response = self.oauth2_client.post(url, files=files, headers=headers)
+        response.raise_for_status()
+
+        return response.json()
+
     def upload(self, parent, fileobj):
         """
         Upload a file to the given parent
@@ -225,6 +241,7 @@ class Client(object):
 
         try:
             response = self.oauth2_client.post(UPLOAD_FILE_URL, data=data, files=files)
+            response_json = response.json()
         except HTTPError, exc:
             if exc.response.status_code != 409:
                 raise
@@ -236,11 +253,8 @@ class Client(object):
             # update the file instead of upload it
             fileobj.seek(0, 0)  # rewind the file just in case.
 
-            headers = {
-                'If-Match': existing_file_etag,
-            }
+            item = {'id': existing_file_id}
 
-            url = UPDATE_FILE_URL.format(existing_file_id)
-            response = self.provider_logic.post(url, files=files, headers=headers)
+            response_json = self.update(item, fileobj, etag=existing_file_etag)
 
-        return response.json()
+        return response_json
