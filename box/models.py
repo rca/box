@@ -155,6 +155,9 @@ class Client(object):
             if count >= total_count:
                 break
 
+    def get_etag(self, item):
+        return self.file_info(item, fields='etag')['etag']
+
     def get_tags(self, item):
         return self.file_info(item, fields='tags')['tags']
 

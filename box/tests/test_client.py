@@ -138,6 +138,16 @@ class ClientTestCase(unittest.TestCase):
 
         self.assertEqual(['folder']*10, folders)
 
+    def test_get_etag(self):
+        item = {'id': 1234}
+        expected = 'etag'
+
+        self.oauth2_client.get.return_value.json.return_value = {'etag': expected}
+
+        etag = self.client.get_etag(item)
+
+        self.assertEqual(expected, etag)
+
     def test_get_tags(self):
         item = {'id': 1234}
         expected = ['foo', 'bar']
