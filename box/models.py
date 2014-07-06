@@ -21,13 +21,13 @@ ROOT_FOLDER = {'id': 0}
 
 
 class Client(object):
-    def __init__(self, provider_logic):
+    def __init__(self, oauth2_client):
         """
         Box client constructor
-        :param provider_logic: oauthclient ProviderLogic instance
+        :param oauth2_client: OAuth2Client instance
         :return:
         """
-        self.provider_logic = provider_logic
+        self.oauth2_client = oauth2_client
 
     def add_tags(self, item, tags):
         """
@@ -65,7 +65,7 @@ class Client(object):
             }
         })
 
-        response = self.provider_logic.post(FOLDERS_URL, data=payload)
+        response = self.oauth2_client.post(FOLDERS_URL, data=payload)
 
         return response.json()
 
@@ -81,7 +81,7 @@ class Client(object):
             'If-Match': item['etag']
         }
 
-        self.provider_logic.delete(url, headers=headers)
+        self.oauth2_client.delete(url, headers=headers)
 
     def delete_folder(self, item, recursive=False):
         """
@@ -98,7 +98,7 @@ class Client(object):
             'recursive': recursive,
         }
 
-        self.provider_logic.delete(url, params=params)
+        self.oauth2_client.delete(url, params=params)
 
     def file_info(self, item, fields=None):
         """
@@ -114,7 +114,7 @@ class Client(object):
         if fields:
             params['fields'] = fields
 
-        return self.provider_logic.get(url, params=params).json()
+        return self.oauth2_client.get(url, params=params).json()
 
     def folder_items(self, parent=None, limit=100, offset=0):
         """
@@ -137,7 +137,7 @@ class Client(object):
                 'offset': offset+count,
             }
 
-            response = self.provider_logic.get(url, params=params)
+            response = self.oauth2_client.get(url, params=params)
             response.raise_for_status()
 
             json_data = response.json()
@@ -154,6 +154,9 @@ class Client(object):
             total_count = json_data['total_count']
             if count >= total_count:
                 break
+
+    def get_etag(self, item):
+        return self.file_info(item, fields='etag')['etag']
 
     def get_tags(self, item):
         return self.file_info(item, fields='tags')['tags']
@@ -200,16 +203,40 @@ class Client(object):
             'tags': tags,
         })
 
-        self.provider_logic.put(url, data=data)
+        self.oauth2_client.put(url, data=data)
 
-    def upload(self, parent, fileobj):
+    def update(self, item, fileobj, etag=None, content_hash=None):
+        headers = {
+            'If-Match': etag or self.get_etag(item),
+        }
+
+        if content_hash:
+            headers.update({
+                'Content-MD5': content_hash,
+            })
+
+        files = {
+            'filename': (fileobj.name, fileobj),
+        }
+
+        url = UPDATE_FILE_URL.format(item['id'])
+
+        response = self.oauth2_client.post(url, files=files, headers=headers)
+        response.raise_for_status()
+
+        return response.json()
+
+    def upload(self, parent, fileobj, content_hash=None):
         """
         Upload a file to the given parent
 
-        This handles 409 HTTP errors and will attempt to update the existing file.
+        This handles 409 HTTP errors and will attempt to update the existing
+        file.  An optional content_hash can be passed in.  When given, the request is
+        made with the `Content-MD5` header.
 
         :param parent: box item dictionary representing the parent folder to upload to
         :param fileobj: a file-like object to get the contents from
+        :param content_hash: Optional, the file's SHA-1 hash.
         :return: Box API response JSON data
         """
         data = {
@@ -220,8 +247,15 @@ class Client(object):
             'filename': (fileobj.name, fileobj),
         }
 
+        headers = {}
+        if content_hash:
+            headers.update({
+                'Content-MD5': content_hash,
+            })
+
         try:
-            response = self.provider_logic.post(UPLOAD_FILE_URL, data=data, files=files)
+            response = self.oauth2_client.post(UPLOAD_FILE_URL, data=data, files=files, headers=headers)
+            response_json = response.json()
         except HTTPError, exc:
             if exc.response.status_code != 409:
                 raise
@@ -233,11 +267,13 @@ class Client(object):
             # update the file instead of upload it
             fileobj.seek(0, 0)  # rewind the file just in case.
 
-            headers = {
-                'If-Match': existing_file_etag,
-            }
+            item = {'id': existing_file_id}
 
-            url = UPDATE_FILE_URL.format(existing_file_id)
-            response = self.provider_logic.post(url, files=files, headers=headers)
+            response_json = self.update(
+                item,
+                fileobj,
+                etag=existing_file_etag,
+                content_hash=content_hash
+            )
 
-        return response.json()
+        return response_json
