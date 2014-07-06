@@ -134,6 +134,9 @@ class Client(object):
             if count >= total_count:
                 break
 
+    def get_tags(self, item):
+        return self.file_info(item, fields='tags')['tags']
+
     def set_tags(self, item, tags):
         """
         Sets the tags for the given item

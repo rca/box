@@ -106,6 +106,16 @@ class ClientTestCase(unittest.TestCase):
 
         self.assertEqual(['folder']*10, folders)
 
+    def test_get_tags(self):
+        item = {'id': 1234}
+        expected = ['foo', 'bar']
+
+        self.provider_logic.get.return_value.json.return_value = {'tags': expected}
+
+        tags = self.client.get_tags(item)
+
+        self.assertEqual(expected, tags)
+
     def test_total_count(self):
         """
         Make sure additional requests aren't made when total_count is hit
