@@ -116,6 +116,35 @@ class ClientTestCase(unittest.TestCase):
 
         self.assertEqual(expected, tags)
 
+    def test_remove_tags(self):
+        item = {'id': 1234}
+        tags = ['foo']
+        removed_tags = ['bar']
+
+        self.client.get_tags = mock.Mock()
+        self.client.get_tags.return_value = tags + removed_tags
+
+        new_tags = self.client.remove_tags(item, removed_tags)
+
+        self.assertEqual(tags, new_tags)
+
+        url = FILE_URL.format(item['id'])
+
+        self.provider_logic.put.assert_called_with(url, data=json.dumps({'tags': tags}))
+
+    def test_remove_tags_none_removed(self):
+        item = {'id': 1234}
+        tags = ['foo']
+        removed_tags = ['bar']
+
+        self.client.get_tags = mock.Mock()
+        self.client.get_tags.return_value = tags
+
+        new_tags = self.client.remove_tags(item, removed_tags)
+
+        self.assertEqual(tags, new_tags)
+        self.assertEqual(False, self.provider_logic.put.called)
+
     def test_total_count(self):
         """
         Make sure additional requests aren't made when total_count is hit

@@ -137,6 +137,30 @@ class Client(object):
     def get_tags(self, item):
         return self.file_info(item, fields='tags')['tags']
 
+    def remove_tags(self, item, tags):
+        """
+        Removes tags from the given item
+
+        :param item: Box API item dictionary
+        :param tags: List of tags to remove from the item
+        :return: New list of tags
+        """
+        current_tags = self.get_tags(item)
+
+        update = False
+        new_tags = []
+        for tag in current_tags:
+            if tag in tags:
+                update = True
+                continue
+
+            new_tags.append(tag)
+
+        if update:
+            self.set_tags(item, new_tags)
+
+        return new_tags
+
     def set_tags(self, item, tags):
         """
         Sets the tags for the given item
