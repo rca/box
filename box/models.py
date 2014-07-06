@@ -226,6 +226,21 @@ class Client(object):
 
         return response.json()
 
+    def update_info(self, item, info):
+        """
+        Updates the given item's metadata, such as name, description, etc.
+
+        :param item: Box API item dictionary
+        :param info: dictionary of information to modify
+        :return: Box API item dictionary
+        """
+        url = FILE_URL.format(item['id'])
+        payload = json.dumps(info)
+
+        response = self.oauth2_client.put(url, data=payload)
+
+        return response.json()
+
     def upload(self, parent, fileobj, content_hash=None):
         """
         Upload a file to the given parent

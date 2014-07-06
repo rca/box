@@ -306,6 +306,23 @@ class ClientTestCase(unittest.TestCase):
             },
         )
 
+    def test_update_info(self):
+        expected = {'return': 'value'}
+        self.oauth2_client.put.return_value.json.return_value = expected
+
+        item = {'id': 1234}
+        info = {'name': 'foo'}
+
+        response_json = self.client.update_info(item, info)
+
+        self.client.update_info(item, info)
+
+        url = FILE_URL.format(item['id'])
+
+        self.oauth2_client.put.assert_called_with(url, data=json.dumps(info))
+
+        self.assertEqual(expected, response_json)
+
     def test_upload(self):
         fileobj = mock.Mock()
         fileobj.name = 'foo.txt'
