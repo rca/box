@@ -348,6 +348,58 @@ class ClientTestCase(unittest.TestCase):
 
     def test_upload_existing_file(self):
         fileobj = mock.Mock()
+
+        parent = {'id': 0}
+
+        # setup POST to have two responses
+        self.oauth2_client.post.side_effect = [HTTPError]
+
+        self.assertRaises(HTTPError, self.client.upload, parent, fileobj)
+
+    def test_upload_or_update(self):
+        fileobj = mock.Mock()
+        fileobj.name = 'foo.txt'
+
+        parent = {'id': 0}
+
+        expected = {'status': 'ok'}
+        self.oauth2_client.post.return_value.json.return_value = expected
+
+        response_json, uploaded = self.client.upload_or_update(parent, fileobj)
+
+        self.oauth2_client.post.assert_called_with(
+            UPLOAD_FILE_URL,
+            data={'parent_id': parent['id']},
+            files={'filename': (fileobj.name, fileobj)},
+            headers={},
+        )
+
+        self.assertEqual(expected, response_json)
+        self.assertEqual(True, uploaded)
+
+    def test_upload_or_update_with_hash(self):
+        fileobj = mock.Mock()
+        fileobj.name = 'foo.txt'
+
+        parent = {'id': 0}
+
+        expected = {'status': 'ok'}
+        self.oauth2_client.post.return_value.json.return_value = expected
+
+        response_json, uploaded = self.client.upload_or_update(parent, fileobj, content_hash='hash')
+
+        self.oauth2_client.post.assert_called_with(
+            UPLOAD_FILE_URL,
+            data={'parent_id': parent['id']},
+            files={'filename': (fileobj.name, fileobj)},
+            headers={'Content-MD5': 'hash'},
+        )
+
+        self.assertEqual(expected, response_json)
+        self.assertEqual(True, uploaded)
+
+    def test_upload_or_update_existing_file(self):
+        fileobj = mock.Mock()
         fileobj.name = 'foo.txt'
 
         parent = {'id': 0}
@@ -364,7 +416,7 @@ class ClientTestCase(unittest.TestCase):
         # setup POST to have two responses
         self.oauth2_client.post.side_effect = [error, response]
 
-        response_json = self.client.upload(parent, fileobj)
+        response_json, uploaded = self.client.upload_or_update(parent, fileobj)
 
         self.oauth2_client.post.assert_called_with(
             UPDATE_FILE_URL.format(error_json['context_info']['conflicts']['id']),
@@ -373,8 +425,9 @@ class ClientTestCase(unittest.TestCase):
         )
 
         self.assertEqual(expected, response_json)
+        self.assertEqual(False, uploaded)
 
-    def test_upload_existing_file_with_hash(self):
+    def test_upload_or_update_existing_file_with_hash(self):
         fileobj = mock.Mock()
         fileobj.name = 'foo.txt'
 
@@ -391,7 +444,7 @@ class ClientTestCase(unittest.TestCase):
 
         self.oauth2_client.post.side_effect = [error, response]
 
-        response_json = self.client.upload(parent, fileobj, content_hash='hash')
+        response_json, uploaded = self.client.upload_or_update(parent, fileobj, content_hash='hash')
 
         self.oauth2_client.post.assert_called_with(
             UPDATE_FILE_URL.format(error_json['context_info']['conflicts']['id']),
@@ -403,3 +456,4 @@ class ClientTestCase(unittest.TestCase):
         )
 
         self.assertEqual(expected, response_json)
+        self.assertEqual(False, uploaded)
