@@ -205,10 +205,15 @@ class Client(object):
 
         self.oauth2_client.put(url, data=data)
 
-    def update(self, item, fileobj, etag=None):
+    def update(self, item, fileobj, etag=None, content_hash=None):
         headers = {
             'If-Match': etag or self.get_etag(item),
         }
+
+        if content_hash:
+            headers.update({
+                'Content-MD5': content_hash,
+            })
 
         files = {
             'filename': (fileobj.name, fileobj),
@@ -221,14 +226,17 @@ class Client(object):
 
         return response.json()
 
-    def upload(self, parent, fileobj):
+    def upload(self, parent, fileobj, content_hash=None):
         """
         Upload a file to the given parent
 
-        This handles 409 HTTP errors and will attempt to update the existing file.
+        This handles 409 HTTP errors and will attempt to update the existing
+        file.  An optional content_hash can be passed in.  When given, the request is
+        made with the `Content-MD5` header.
 
         :param parent: box item dictionary representing the parent folder to upload to
         :param fileobj: a file-like object to get the contents from
+        :param content_hash: Optional, the file's SHA-1 hash.
         :return: Box API response JSON data
         """
         data = {
@@ -239,8 +247,14 @@ class Client(object):
             'filename': (fileobj.name, fileobj),
         }
 
+        headers = {}
+        if content_hash:
+            headers.update({
+                'Content-MD5': content_hash,
+            })
+
         try:
-            response = self.oauth2_client.post(UPLOAD_FILE_URL, data=data, files=files)
+            response = self.oauth2_client.post(UPLOAD_FILE_URL, data=data, files=files, headers=headers)
             response_json = response.json()
         except HTTPError, exc:
             if exc.response.status_code != 409:
@@ -255,6 +269,11 @@ class Client(object):
 
             item = {'id': existing_file_id}
 
-            response_json = self.update(item, fileobj, etag=existing_file_etag)
+            response_json = self.update(
+                item,
+                fileobj,
+                etag=existing_file_etag,
+                content_hash=content_hash
+            )
 
         return response_json
