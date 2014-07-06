@@ -9,7 +9,7 @@ install_requires = [
 ]
 
 setup(name='boxclient',
-      version='1.1.0',
+      version='1.2.0',
       description='Box API v2.0 client',
       author='Roberto Aguilar',
       author_email='r@rreboto.com',
