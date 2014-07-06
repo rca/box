@@ -29,6 +29,27 @@ class Client(object):
         """
         self.provider_logic = provider_logic
 
+    def add_tags(self, item, tags):
+        """
+        Adds tags to the given item
+
+        :param item: Box API item dictionary
+        :param tags: List of tags to add to the item
+        :return: New list of tags
+        """
+        current_tags = self.get_tags(item)
+
+        update = False
+        for tag in tags:
+            if tag not in current_tags:
+                update = True
+                current_tags.append(tag)
+
+        if update:
+            self.set_tags(item, current_tags)
+
+        return current_tags
+
     def create_folder(self, name, parent):
         """
         Creates a folder within the given parent

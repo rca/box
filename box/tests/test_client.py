@@ -14,6 +14,38 @@ class ClientTestCase(unittest.TestCase):
         self.provider_logic = mock.Mock()
         self.client = Client(self.provider_logic)
 
+    def test_add_tags(self):
+        item = {'id': 1234}
+        tags = ['foo']
+        added_tags = ['bar']
+
+        self.client.get_tags = mock.Mock()
+        self.client.get_tags.return_value = tags[:]  # make a copy of the list
+
+        new_tags = self.client.add_tags(item, added_tags)
+        expected_tags = tags + added_tags
+
+        self.assertEqual(expected_tags, new_tags)
+
+        url = FILE_URL.format(item['id'])
+
+        self.provider_logic.put.assert_called_with(url, data=json.dumps({'tags': expected_tags}))
+
+    def test_add_tags_none_added(self):
+        item = {'id': 1234}
+        tags = ['foo']
+        added_tags = ['bar']
+        expected_tags = tags + added_tags
+
+        self.client.get_tags = mock.Mock()
+        self.client.get_tags.return_value = expected_tags
+
+        new_tags = self.client.add_tags(item, added_tags)
+
+        self.assertEqual(expected_tags, new_tags)
+
+        self.assertEqual(False, self.provider_logic.put.called)
+
     def test_create_folder(self):
         name = 'foo'
         parent = {'id': 0, 'name': 'root'}
