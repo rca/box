@@ -102,19 +102,27 @@ class Client(object):
 
     def file_info(self, item, fields=None):
         """
-        Returns file information for the given item
+        Returns the requested file's information
 
         :param item: Box API item dictionary
-        :return:
+        :param fields: Optional, restrict the request to the given fields
+        :return: File's information
         """
         url = FILE_URL.format(item['id'])
 
-        params = {}
+        return self.item_info(url, fields=fields)
 
-        if fields:
-            params['fields'] = fields
+    def folder_info(self, item, fields=None):
+        """
+        Returns the requested folder's information
 
-        return self.oauth2_client.get(url, params=params).json()
+        :param item: Box API item dictionary
+        :param fields: Optional, restrict the request to the given fields
+        :return: File's information
+        """
+        url = FOLDER_URL.format(item['id'])
+
+        return self.item_info(url, fields=fields)
 
     def folder_items(self, parent=None, limit=100, offset=0):
         """
@@ -161,6 +169,23 @@ class Client(object):
     def get_tags(self, item):
         return self.file_info(item, fields='tags')['tags']
 
+    def item_info(self, url, fields=None):
+        """
+        Returns file information for the given item
+
+        :param url: URL to make the request to
+        :param fields: optional, restrict to the given list of fields
+        :return:
+        """
+        params = {}
+
+        if fields:
+            params['fields'] = fields
+
+        print 'url={}, params={}'.format(url, params)
+
+        return self.oauth2_client.get(url, params=params).json()
+
     def remove_tags(self, item, tags):
         """
         Removes tags from the given item
@@ -205,7 +230,7 @@ class Client(object):
 
         self.oauth2_client.put(url, data=data)
 
-    def update(self, item, fileobj, etag=None, content_hash=None):
+    def update(self, item, fileobj, filename=None, etag=None, content_hash=None):
         headers = {
             'If-Match': etag or self.get_etag(item),
         }
@@ -215,8 +240,11 @@ class Client(object):
                 'Content-MD5': content_hash,
             })
 
+        if filename is None:
+            filename = fileobj.name
+
         files = {
-            'filename': (fileobj.name, fileobj),
+            'filename': (filename, fileobj),
         }
 
         url = UPDATE_FILE_URL.format(item['id'])
@@ -226,7 +254,19 @@ class Client(object):
 
         return response.json()
 
-    def update_info(self, item, info):
+    def update_file_info(self, item, info, etag=None):
+        url = FILE_URL.format(item['id'])
+        etag = etag or self.file_info(item, fields='etag')['etag']
+
+        return self.update_info(url, info, etag)
+
+    def update_folder_info(self, item, info, etag=None):
+        url = FOLDER_URL.format(item['id'])
+        etag = etag or self.folder_info(item, fields='etag')['etag']
+
+        return self.update_info(url, info, etag)
+
+    def update_info(self, url, info, etag):
         """
         Updates the given item's metadata, such as name, description, etc.
 
@@ -234,14 +274,17 @@ class Client(object):
         :param info: dictionary of information to modify
         :return: Box API item dictionary
         """
-        url = FILE_URL.format(item['id'])
         payload = json.dumps(info)
 
-        response = self.oauth2_client.put(url, data=payload)
+        headers = {
+            'If-Match': etag,
+        }
+
+        response = self.oauth2_client.put(url, data=payload, headers=headers)
 
         return response.json()
 
-    def upload(self, parent, fileobj, content_hash=None):
+    def upload(self, parent, fileobj, filename=None, content_hash=None):
         """
         Upload a file to the given parent
 
@@ -257,8 +300,11 @@ class Client(object):
             'parent_id': parent['id'],
         }
 
+        if filename is None:
+            filename = fileobj.name
+
         files = {
-            'filename': (fileobj.name, fileobj),
+            'filename': (filename, fileobj),
         }
 
         headers = {}
@@ -271,7 +317,7 @@ class Client(object):
 
         return response.json()
 
-    def upload_or_update(self, parent, fileobj, content_hash=None):
+    def upload_or_update(self, parent, fileobj, filename=None, content_hash=None):
         """
         Upload a file to the given parent
 
@@ -286,7 +332,8 @@ class Client(object):
                  When False, the file was updated.
         """
         try:
-            response_json = self.upload(parent, fileobj, content_hash=content_hash)
+            response_json = self.upload(
+                parent, fileobj, filename=filename, content_hash=content_hash)
         except HTTPError, exc:
             if exc.response.status_code != 409:
                 raise
@@ -303,6 +350,7 @@ class Client(object):
             response_json = self.update(
                 item,
                 fileobj,
+                filename=filename,
                 etag=existing_file_etag,
                 content_hash=content_hash
             )
