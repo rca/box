@@ -306,20 +306,43 @@ class ClientTestCase(unittest.TestCase):
             },
         )
 
-    def test_update_info(self):
+    def test_update_file_info(self):
         expected = {'return': 'value'}
         self.oauth2_client.put.return_value.json.return_value = expected
 
+        etag = 'etag'
         item = {'id': 1234}
         info = {'name': 'foo'}
 
-        response_json = self.client.update_info(item, info)
+        self.client.file_info = mock.Mock()
+        self.client.file_info.return_value = {'etag': etag}
 
-        self.client.update_info(item, info)
+        response_json = self.client.update_file_info(item, info)
 
         url = FILE_URL.format(item['id'])
 
-        self.oauth2_client.put.assert_called_with(url, data=json.dumps(info))
+        self.oauth2_client.put.assert_called_with(
+            url, data=json.dumps(info), headers={'If-Match': etag})
+
+        self.assertEqual(expected, response_json)
+
+    def test_update_folder_info(self):
+        expected = {'return': 'value'}
+        self.oauth2_client.put.return_value.json.return_value = expected
+
+        etag = 'etag'
+        item = {'id': 1234}
+        info = {'name': 'foo'}
+
+        self.client.folder_info = mock.Mock()
+        self.client.folder_info.return_value = {'etag': etag}
+
+        response_json = self.client.update_folder_info(item, info)
+
+        url = FOLDER_URL.format(item['id'])
+
+        self.oauth2_client.put.assert_called_with(
+            url, data=json.dumps(info), headers={'If-Match': etag})
 
         self.assertEqual(expected, response_json)
 
