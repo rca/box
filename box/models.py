@@ -102,19 +102,27 @@ class Client(object):
 
     def file_info(self, item, fields=None):
         """
-        Returns file information for the given item
+        Returns the requested file's information
 
         :param item: Box API item dictionary
-        :return:
+        :param fields: Optional, restrict the request to the given fields
+        :return: File's information
         """
         url = FILE_URL.format(item['id'])
 
-        params = {}
+        return self.item_info(url, fields=fields)
 
-        if fields:
-            params['fields'] = fields
+    def folder_info(self, item, fields=None):
+        """
+        Returns the requested folder's information
 
-        return self.oauth2_client.get(url, params=params).json()
+        :param item: Box API item dictionary
+        :param fields: Optional, restrict the request to the given fields
+        :return: File's information
+        """
+        url = FOLDER_URL.format(item['id'])
+
+        return self.item_info(url, fields=fields)
 
     def folder_items(self, parent=None, limit=100, offset=0):
         """
@@ -160,6 +168,23 @@ class Client(object):
 
     def get_tags(self, item):
         return self.file_info(item, fields='tags')['tags']
+
+    def item_info(self, url, fields=None):
+        """
+        Returns file information for the given item
+
+        :param url: URL to make the request to
+        :param fields: optional, restrict to the given list of fields
+        :return:
+        """
+        params = {}
+
+        if fields:
+            params['fields'] = fields
+
+        print 'url={}, params={}'.format(url, params)
+
+        return self.oauth2_client.get(url, params=params).json()
 
     def remove_tags(self, item, tags):
         """
