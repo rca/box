@@ -5,11 +5,11 @@ from distutils.core import setup
 
 
 install_requires = [
-    'oauthclient==1.0.2',
+    'oauthclient==1.0.3',
 ]
 
 setup(name='boxclient',
-      version='2.2.1',
+      version='2.2.2',
       description='Box API v2.0 client',
       author='Roberto Aguilar',
       author_email='r@rreboto.com',
